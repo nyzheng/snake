@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>0425</title>
+        <style>
+            body {
+                top: 0;
+            }
+
+            #map {
+                width: 500px;
+                height: 500px;
+                position: relative;
+                background-color: #ccc;
+                margin: auto;
+            }
+
+            #player {
+                width: 50px;
+                height: 50px;
+                position: absolute;
+                top: 0;
+                left: 0;
+                background-color: rgb(22, 41, 83);
+            }
+
+            #food {
+                width: 50px;
+                height: 50px;
+                position: absolute;
+                background-color: brown;
+            }
+
+            /* 調整score在父元素中的佈局 */
+            #score {
+                margin-left: 10px;
+                text-align: center;
+            }
+        </style>
+    </head>
+
+    <body>
+        <div id="map-container">
+            <div id="map">
+                <div id="player"></div>
+                <div id=" body"></div>
+                <div id="food"></div>
+            </div>
+            <div id="score">Score: 0</div>
+        </div>
+
+        <script>
+            //tool
+            // function randomNum(num,uni = 1) {
+            //     return Math.floor(Math.random()*num)*uni;
+            // }
+            // function isCollision(objA,objB) {
+            //     return objA.x === objB.x && objA.y === objB.y;
+            // }
+
+            class System {
+                constructor() {
+                    //地圖
+                    this.width = 500
+                    this.height = 500
+                    this.maxStep = 10
+                    this.stepPx = 50
+                }
+            }
+
+            //玩家
+            class Player {
+                constructor() {
+                    //玩家起始位置
+                    this.x = 0
+                    this.y = 0
+                    //玩家移動後位置
+                    this.nextMoveX = 0
+                    this.nextMoveY = 0
+                }
+
+                //按鍵移動玩家位置
+                moveUp() {
+                    this.nextMoveY -= sysInfo.stepPx
+                }
+                moveDown() {
+                    this.nextMoveY += sysInfo.stepPx
+                }
+                moveLeft() {
+                    this.nextMoveX -= sysInfo.stepPx
+                }
+                moveRight() {
+                    this.nextMoveX += sysInfo.stepPx
+                }
+
+                //玩家是否碰到牆壁，如果碰到則移動到另一端
+                checkWall() {
+                    if (this.nextMoveY === -50) {
+                        this.nextMoveY = 450
+                    }
+                    if (this.nextMoveY === 500) {
+                        this.nextMoveY = 0
+                    }
+                    if (this.nextMoveX === -50) {
+                        this.nextMoveX = 450
+                    }
+                    if (this.nextMoveX === 500) {
+                        this.nextMoveX = 0
+                    }
+                }
+
+                //將玩家移動後位置賦值到原位置
+                go() {
+                    this.x = this.nextMoveX
+                    this.y = this.nextMoveY
+                }
+
+                setPlayer() {
+                    let elPlayer = document.getElementById('player')
+                    elPlayer.style.left = `${this.x}px`
+                    elPlayer.style.top = `${this.y}px`
+                }
+            }
+
+            //一次只能一個狀態
+            //設定初始x:0, y:0
+            //X增減的時候只能改變y增減
+            //y增減的時候只能改變x增減
+
+            //---------------------------
+            let playerInfo = new Player()
+            let sysInfo = new System()
+            let currentDirection = false
+            let lastDirection = ''
+            let isStart = false
+            let food = {
+                x: 0,
+                y: 0,
+            }
+            let elfood = document.getElementById('food')
+            let body = [] //新的身體單位
+            // 新增一個變數，用於儲存蛇尾的位置
+            let tail = body[body.length - 1]
+
+            //分數
+            let score = 0
+            //---------------------------
+
+            //吃到寶箱後加分
+            function updateScore() {
+                score++
+                console.log(`分數${score}`)
+                document.getElementById('score').textContent = `Score: ${score}`
+            }
+
+            function playerMove(direction) {
+                // 移動蛇身體
+                // for (let i = body.length - 1; i >= 1; i--) {
+                //     body[i].x = body[i - 1].x;
+                //     body[i].y = body[i - 1].y;
+                // }
+
+                // 更新蛇頭位置
+                if (direction === 'ArrowUp') playerInfo.moveUp()
+                if (direction === 'ArrowDown') playerInfo.moveDown()
+                if (direction === 'ArrowLeft') playerInfo.moveLeft()
+                if (direction === 'ArrowRight') playerInfo.moveRight()
+            }
+            //上述代碼中，我們首先取得蛇尾的位置
+            // 然後將蛇身體的每個單位從後往前移動一個位置。
+            // 接著，將蛇頭位置更新到新的位置。
+            // 最後，再將蛇尾位置更新回原來的位置。
+
+            function start() {
+                if (isStart) return
+                isStart = true
+                loop()
+            }
+            function loop() {
+                if (!isStart) return
+                if (currentDirection !== false) {
+                    playerMove(currentDirection)
+                    set()
+                    console.log(`x:${playerInfo.x}`, `y:${playerInfo.y}`)
+                }
+                setTimeout(loop, 100)
+            }
+            function end() {
+                isStart = false
+            }
+            start()
+            function set() {
+                //每一次移動所要執行的function
+                //順序要注意!
+
+                for (let i = body.length - 1; i > 0; i--) {
+                    body[i].x = body[i - 1].x
+                    body[i].y = body[i - 1].y
+                }
+                if (body.length > 0) {
+                    body[0].x = playerInfo.x
+                    body[0].y = playerInfo.y
+                }
+
+                playerInfo.checkWall()
+                playerInfo.go()
+
+                playerInfo.setPlayer()
+                checkBump()
+            }
+            //監聽按鍵
+            document.addEventListener('keydown', (e) => {
+                if (e.code !== 'ArrowUp' && e.code !== 'ArrowDown' && e.code !== 'ArrowLeft' && e.code !== 'ArrowRight')
+                    return
+
+                //新增一個變數來儲存方向 並檢查是否與目前方向相反
+                if (
+                    (e.code === 'ArrowUp' && lastDirection !== 'ArrowDown') ||
+                    (e.code === 'ArrowDown' && lastDirection !== 'ArrowUp') ||
+                    (e.code === 'ArrowLeft' && lastDirection !== 'ArrowRight') ||
+                    (e.code === 'ArrowRight' && lastDirection !== 'ArrowLeft')
+                ) {
+                    currentDirection = e.code
+                    lastDirection = e.code
+                }
+            })
+
+            //----------------------------
+            function foodSpawn() {
+                //food 隨機生成與位置
+                for (let i = 0; i < 1; i++) {
+                    fx = Math.floor(Math.random() * sysInfo.maxStep) * sysInfo.stepPx
+                    fy = Math.floor(Math.random() * sysInfo.maxStep) * sysInfo.stepPx
+                    // 確認食物是否與玩家重疊
+                    if (fx === playerInfo.x && fy === playerInfo.y) {
+                        console.log('食物跟玩家重疊')
+                        continue
+                        i--
+                    }
+                    food.x = fx
+                    food.y = fy
+                    elfood.style.left = `${food.x}px`
+                    elfood.style.top = `${food.y}px`
+                    console.log('食物位置' + 'x:' + food.x + ' ' + 'y:' + food.y)
+                }
+            }
+            foodSpawn()
+            function checkBump() {
+                if (food.x === playerInfo.x && food.y === playerInfo.y) {
+                    console.log('吃到食物')
+                    //加分
+                    foodSpawn()
+                    updateScore()
+                    body.push({ x: food.x, y: food.y })
+                }
+            }
+            //-----------------------------
+            // 更新蛇身體位置
+            // for (let i = 0; i < body.length; i++) {
+            //     const unit = body[i];
+            //     const el = document.getElementById(`unit${i}`);
+            //     el.style.left = `${unit.x}px`;
+            //     el.style.top = `${unit.y}px`;
+            // }
+        </script>
+    </body>
+</html>
